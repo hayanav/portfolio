@@ -1,0 +1,136 @@
+library(tidyverse)
+#leveraging time series forecasting- future values depend on past values
+#ARIMA- forecast AR(Autoregressive), I(Integrated or stationary), MA(Moving Average)
+#regressed on its lagged values
+
+dt <- read_csv("google.csv")
+dt %>% glimpse()
+dt %>% head(2)
+
+dt %>% tail(2)
+
+#create the time series
+library(lubridate)
+dt <- dt %>%
+  mutate(date = yq(datafqtr) + months(3) - days(1))
+dt %>% select(datafqtr, date) %>% head(2)
+
+#Time series trend- making a plot
+dt %>%
+  ggplot(aes(x=date, y=saleq)) +
+  geom_point() + geom_line()
+
+#training and validation sets
+#descending order and using the first 4 observations
+dtTest <- dt %>% 
+  arrange(desc(date)) %>%
+  top_n(4, date)
+dtTest
+
+dtTrain <- dt %>%
+  filter(!(date %in% dtTest$date)) %>%
+  arrange(desc(date))
+head(dtTrain, 2)
+
+tail(dtTrain, 2)
+     
+# auto.arima- estimate best arima model- estimate
+# best # of lags for the AR and MA components of the model and the I
+# takes as imput a univariate time series- meaning that our data
+# should only have one variable(saleq) and the data points should be
+# time ordered. need to use xts
+
+library(xts)
+dtxts_Train <- xts(dtTrain$saleq,
+                   order.by = dtTrain$date)    
+head(dtxts_Train, 4)  
+     
+dtxts_Test <- xts(dtTest$saleq,
+                  order.by = dtTest$date)
+head(dtxts_Test)
+     
+#ARIMA model
+M1 <- auto.arima(dtxts_Train)
+summary(M1)
+
+fM1 <- forecast(M1,4)
+fM1
+
+plot(fM1, xlab =  'Quarter' , ylab =  'Sales')
+
+accuracy(fM1, dtxts_Test)
+
+dtxts <- xts(dt$saleq, order.by = dt$date)
+head(dtxts,2)
+
+tail(dtxts,2)
+
+M2 <- auto.arima(dtxts)
+summary(M2)
+
+fM2 <- forecast(M2, 2)
+fM2
+
+plot(fM2)
+
+library(scales)
+dt %>%
+  ggplot(aes(x=date, y=saleq)) +
+  geom_point(colour = "blue") +
+  geom_line(colour = "grey75") +
+  scale_x_date(breaks = date_breaks(width = "1 year"),
+              labels = date_format( '%Y' )) +
+  scale_y_continuous(labels = comma_format()) +
+  xlab("") + ylab("Quarterly Sales") +
+  ggtitle("Google s Quarterly Sales", subtitle = "Units")
+
+
+
+
+
+
+
+
+     
+##dt0 <- read_csv("finStatements4All_FY2009-20.csv")
+names(dt0)
+
+
+
+# The ticker symbol for Tesla is TSLA
+
+dt0 %>% filter(tic=="TSLA") %>% select(fyear, tic, conm, naics)
+dt1 <- dt0 %>% 
+  filter(naics==336111 & fyear>2009 & fyear < 2020) %>% 
+  select(fyear, tic, conm, sale, at, oibdp, naics) %>% 
+  mutate(ROA = oibdp/at, PM = oibdp/sale, TATO=sale/at)
+dt1 %>% select(sale, at, oibdp,ROA, PM, TATO) %>% summary()
+dt2 <- dt1 %>% filter(sale>=100)
+dt2 %>% select(sale, at, oibdp,ROA, PM, TATO) %>% summary()
+dt3_indROA <- dt2 %>% 
+  group_by(fyear) %>% 
+  summarise(ind_minROA = min(ROA),
+            ind_q1ROA  = quantile(ROA, 0.25),
+            ind_medROA = median(ROA),
+            ind_q3ROA  = quantile(ROA, 0.75),
+            ind_maxROA = max(ROA))
+dt3_indROA
+dt3_indPM <- dt2  %>% group_by(fyear) %>% 
+  summarise(ind_minPM = min(PM),
+            ind_q1PM  = quantile(PM, 0.25),ind_medPM = median(PM),
+            ind_q3PM  = quantile(PM, 0.75),ind_maxPM = max(PM))
+dt3_indPM
+dt3_indTATO <- dt2 %>% group_by(fyear) %>% 
+  summarise(ind_minTATO = min(TATO),
+            ind_q1TATO  = quantile(TATO, 0.25),ind_medTATO = median(TATO), 
+            ind_q3TATO  = quantile(TATO, 0.75), ind_maxTATO = max(TATO))
+dt3_indTATO
+dt4Tesla <- dt1 %>% filter(tic=="TSLA") %>% 
+  select(fyear, tic, ROA, PM, TATO)
+dt4Tesla  
+dt5 <- bind_cols(
+  dt3_indROA %>% select(fyear, ind_q1ROA, ind_q3ROA),
+  dt3_indPM %>% select(ind_q1PM, ind_q3PM),
+  dt3_indTATO %>% select(ind_q1TATO, ind_q3TATO),
+  dt4Tesla %>% select(tic, ROA, PM, TATO))
+dt5
