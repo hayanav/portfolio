@@ -1,0 +1,55 @@
+---
+title: "Graphing Metrics"
+author: "Haya Naviwala"
+date: "5/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+--> Best practice when it comes to NLP is to explore the data, the nodes, and metrics related to the nodes. Understanding this data and its structure opens us to the next steps to conduct proper NLP analysis and start the preprocessing of the data
+
+```{r, error=TRUE}
+library(igraph)
+library(rmarkdown)
+
+Members= read.csv("Members.csv", header=T)
+CommitteeEMail= read.csv("CommitteeEMail.csv", header=T)
+#GraphDensity
+Membersgraph=graph_from_data_frame(Members, directed=F)
+Membersgraph=graph_from_data_frame(Members, directed=F, vertices=CommitteeEMail)
+V(Membersgraph)
+E(Membersgraph)
+MG= simplify(Membersgraph)
+plot(MG)
+
+graph.density(MG)
+
+#GraphReciprocity
+reciprocity(MG)
+
+#Egometrics- degree
+degree(MG)
+
+#Egometrics- closeness
+closeness(MG)
+
+#Egometrics- betweenness
+betweenness(MG)
+
+#Egometrics- eigenvectorcentrality
+evcent(MG)
+```
+
+## Including Plots
+
+
+```{r MG, echo=FALSE}
+plot(MG)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
