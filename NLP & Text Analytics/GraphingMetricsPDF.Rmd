@@ -1,8 +1,8 @@
 ---
-title: "Graphing Metrics"
+title: "Graphing Metrics PDF"
 author: "Haya Naviwala"
 date: "5/11/2022"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 
 --> Best practice when it comes to NLP is to explore the data, the nodes, and metrics related to the nodes. Understanding this data and its structure opens us to the next steps to conduct proper NLP analysis and start the preprocessing of the data
+
 
 ```{r, error=TRUE}
 library(igraph)
@@ -43,10 +44,11 @@ betweenness(MG)
 
 #Egometrics- eigenvectorcentrality
 evcent(MG)
+
+
 ```
 
 ## Including Plots
-
 
 ```{r MG, echo=FALSE}
 plot(MG)
